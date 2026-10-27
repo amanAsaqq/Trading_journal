@@ -1,0 +1,17 @@
+{
+  "name": "Дневник трейдера XAUUSD",
+  "short_name": "Дневник XAU",
+  "description": "Журнал сделок по золоту: скриншоты, заметки, результат, депозит и цель",
+  "lang": "ru",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#121615",
+  "theme_color": "#1B201E",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

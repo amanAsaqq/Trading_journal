@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Дневник трейдера XAUUSD</title>
+<meta name="description" content="Журнал сделок по золоту для начинающих трейдеров">
+<meta name="theme-color" content="#1B201E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Дневник XAU">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<style>
+:root{
+  --bg:#E9ECE8; --surface:#FFFFFF; --surface-2:#F3F5F2; --ink:#1A201E; --muted:#5B6661; --line:#D3DAD5;
+  --gold:#9C700F; --gold-bright:#D4A52C; --gold-soft:#F2E6C4; --on-gold:#FFFFFF;
+  --profit:#1E7A4C; --profit-soft:#DCEFE4; --loss:#B23A2E; --loss-soft:#F6DFDB;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#121615; --surface:#1B201E; --surface-2:#232927; --ink:#E6EAE7; --muted:#97A29D; --line:#2F3633;
+    --gold:#D9AE4E; --gold-bright:#EBC56C; --gold-soft:#3A3222; --on-gold:#1A1508;
+    --profit:#4CBB83; --profit-soft:#173326; --loss:#EC7564; --loss-soft:#3B201C;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121615; --surface:#1B201E; --surface-2:#232927; --ink:#E6EAE7; --muted:#97A29D; --line:#2F3633;
+  --gold:#D9AE4E; --gold-bright:#EBC56C; --gold-soft:#3A3222; --on-gold:#1A1508;
+  --profit:#4CBB83; --profit-soft:#173326; --loss:#EC7564; --loss-soft:#3B201C;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--sans);-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums lining-nums}
+.pos{color:var(--profit)} .neg{color:var(--loss)} .muted{color:var(--muted)}
+.hidden{display:none!important}
+
+main{max-width:640px;margin:0 auto;padding:12px 16px calc(100px + env(safe-area-inset-bottom,0px))}
+.view{display:none}.view.active{display:block}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0 10px}
+.topbar h1{font:600 17px var(--sans);margin:0;min-width:0}
+.pill{white-space:nowrap;flex:none;font-size:13px;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--gold-soft);color:var(--ink);border:1px solid var(--gold)}
+.pill.real{background:var(--loss-soft);border-color:var(--loss)}
+
+h2.sec{font:600 18px var(--sans);margin:30px 0 10px}
+
+/* Баланс */
+.hero{padding:6px 0 18px}
+.hero .label{font-size:14px;color:var(--muted)}
+.hero .balance{font-family:var(--serif);font-size:clamp(42px,12vw,60px);line-height:1.04;letter-spacing:-.01em;margin:2px 0 6px}
+.hero .delta{font-weight:600;font-size:15px}
+
+/* Цель: слиток */
+.goal{display:grid;grid-template-columns:132px 1fr;gap:16px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px}
+.ingot{width:100%;height:auto;display:block}
+.ingot-pct{font:700 17px var(--sans);fill:var(--ink)}
+.goal h3{margin:0 0 2px;font:600 16px var(--sans)}
+.goal p{margin:0;font-size:14px;color:var(--muted)}
+.goal .left{margin-top:6px;font-size:15px;color:var(--ink);font-weight:600}
+.goal-done{color:var(--profit)!important}
+
+/* График */
+.chart{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px 14px 10px}
+.chart-head{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
+.equity{width:100%;height:160px;display:block}
+
+/* Статистика: сетка «бухгалтерской книги» */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.stat{background:var(--surface);padding:12px 14px}
+.stat b{display:block;font-size:20px;font-weight:600}
+.stat small{color:var(--muted);font-size:13px}
+
+/* Разбор */
+.bars{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.bars li{padding:10px 14px;border-top:1px solid var(--line)}
+.bars li:first-child{border-top:0}
+.bars .top{display:flex;justify-content:space-between;gap:10px;font-size:15px}
+.bars .track{height:5px;border-radius:3px;background:var(--surface-2);margin-top:6px;overflow:hidden}
+.bars .fill{height:100%;background:var(--loss);border-radius:3px}
+.bars .fill.gold{background:var(--gold)}
+.note-empty{font-size:14px;color:var(--muted);margin:0}
+
+.banner{display:flex;gap:12px;align-items:center;justify-content:space-between;background:var(--gold-soft);border:1px solid var(--gold);border-radius:14px;padding:12px 14px;margin-bottom:16px;font-size:14px}
+
+.empty{text-align:center;padding:36px 20px;background:var(--surface);border:1px dashed var(--line);border-radius:18px;margin-top:8px}
+.empty h3{margin:0 0 6px;font:600 18px var(--sans)}
+.empty p{margin:0 0 16px;color:var(--muted);font-size:15px}
+
+.brand{display:block;text-align:center;margin:32px 0 0;font-size:14px;color:var(--muted);text-decoration:none}
+.brand strong{color:var(--gold)}
+
+/* Список сделок */
+.filters{display:flex;gap:6px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.day{display:flex;justify-content:space-between;font-size:14px;color:var(--muted);margin:18px 2px 6px}
+.day:first-of-type{margin-top:4px}
+.trade{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:6px}
+.dir{font:700 12px var(--sans);padding:4px 8px;border-radius:6px;min-width:42px;text-align:center}
+.dir.buy{background:var(--profit-soft);color:var(--profit)}
+.dir.sell{background:var(--loss-soft);color:var(--loss)}
+.trade .mid{min-width:0}
+.trade .mid div{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trade .mid small{display:block;color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trade .right{display:flex;align-items:center;gap:10px}
+.trade .pnl{font-weight:600;font-size:16px}
+.thumb{width:44px;height:44px;border-radius:8px;object-fit:cover;background:var(--surface-2);display:block}
+.flag{font-size:12px;color:var(--loss);font-weight:600}
+
+/* Кнопки и поля */
+.btn{border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-weight:600;font-size:16px;background:var(--surface);color:var(--ink)}
+.btn.primary{background:var(--gold);color:var(--on-gold);border-color:transparent}
+.btn.sm{padding:8px 12px;font-size:14px;border-radius:10px}
+.btn.wide{width:100%}
+.btn.danger{color:var(--loss)}
+.btn:disabled{opacity:.5}
+.chip{border:1px solid var(--line);background:var(--surface);padding:7px 12px;border-radius:999px;font-size:14px;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--gold-soft);border-color:var(--gold);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+
+.field{display:block;margin-bottom:14px}
+.field>span,.field-label{display:block;font-size:13px;color:var(--muted);margin-bottom:5px}
+input,select,textarea{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);min-width:0}
+textarea{resize:vertical;min-height:72px}
+input[type="datetime-local"]{min-height:44px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.hint{font-size:13px;color:var(--muted);margin:-6px 0 14px}
+.hint.warn{color:var(--loss);font-weight:600}
+.seg{display:flex;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:none;padding:9px 6px;border-radius:9px;font-weight:600;font-size:15px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.seg button.buy[aria-pressed="true"],.seg button.win[aria-pressed="true"]{background:var(--profit);color:#fff}
+.seg button.sell[aria-pressed="true"],.seg button.loss[aria-pressed="true"]{background:var(--loss);color:#fff}
+.pnl-row{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:8px}
+.checks label{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line);font-size:15px}
+.checks label:first-child{border-top:0}
+.checks input{width:20px;height:20px;flex:none;margin:1px 0 0;accent-color:var(--gold)}
+.shots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.shot{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--surface-2)}
+.shot img{width:100%;height:100%;object-fit:cover;display:block}
+.shot button{position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:18px;line-height:28px;padding:0}
+.shot-add{aspect-ratio:1;border:1.5px dashed var(--line);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted);font-size:13px;cursor:pointer;background:var(--surface)}
+.shot-add svg{width:24px;height:24px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px 14px}
+
+/* Нижнее меню */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs .inner{max-width:640px;margin:0 auto;display:flex;align-items:flex-end}
+.tab{flex:1;background:none;border:0;padding:9px 4px 8px;color:var(--muted);font-size:12px;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:3px}
+.tab svg{width:23px;height:23px}
+.tab[aria-selected="true"]{color:var(--ink)}
+.tab-add{flex:1;display:flex;justify-content:center;padding-bottom:8px}
+.tab-add button{width:56px;height:56px;margin-top:-20px;border-radius:50%;border:4px solid var(--bg);background:var(--gold);color:var(--on-gold);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.18)}
+.tab-add svg{width:26px;height:26px}
+
+/* Листы (диалоги) */
+dialog{border:0;padding:0;width:100%;max-width:640px;height:100%;max-height:100%;margin:0 auto;background:var(--bg);color:var(--ink);overflow:hidden}
+dialog[open]{display:flex;flex-direction:column}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+@media (min-width:700px){dialog{height:auto;max-height:min(92vh,900px);margin:auto;border-radius:20px}}
+.sheet-head{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:8px;padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px;background:var(--surface);border-bottom:1px solid var(--line)}
+@media (min-width:700px){.sheet-head{padding-top:10px}}
+.sheet-head h2{margin:0;font:600 17px var(--sans);text-align:center}
+.icon-btn{width:40px;height:40px;border:0;background:none;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.icon-btn svg{width:22px;height:22px}
+.sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px calc(28px + env(safe-area-inset-bottom,0px));flex:1}
+
+/* Просмотр сделки */
+.d-pnl{font-family:var(--serif);font-size:44px;line-height:1.05;margin:4px 0 2px}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:16px 0}
+.kv div{background:var(--surface);padding:10px 12px}
+.kv small{display:block;color:var(--muted);font-size:12px}
+.kv b{font-weight:600;font-size:15px}
+.d-sec{margin:18px 0 6px;font-size:13px;color:var(--muted)}
+.d-text{white-space:pre-wrap;margin:0;font-size:15px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.d-img{width:100%;border-radius:12px;display:block;margin-bottom:8px;cursor:zoom-in;background:var(--surface-2)}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}
+
+#viewer{background:#000;max-width:none}
+#viewer img{width:100%;height:100%;object-fit:contain}
+#viewer .close{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:12px;color:#fff;background:rgba(255,255,255,.15)}
+
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;max-width:calc(100% - 32px)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.settings-group{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 16px 4px;margin-bottom:14px}
+.settings-group h3{margin:0 0 12px;font:600 16px var(--sans)}
+.stack{display:grid;gap:8px;margin-bottom:12px}
+.welcome-text{font-size:15px;color:var(--muted);margin:0 0 18px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<main>
+  <section class="view active" id="view-overview" aria-label="Обзор"></section>
+  <section class="view" id="view-trades" aria-label="Сделки"></section>
+  <section class="view" id="view-settings" aria-label="Настройки"></section>
+</main>
+
+<nav class="tabs" aria-label="Разделы">
+  <div class="inner" role="tablist">
+    <button class="tab" role="tab" data-view="overview" aria-selected="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/></svg>Обзор</button>
+    <button class="tab" role="tab" data-view="trades" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>Сделки</button>
+    <div class="tab-add"><button id="btn-add" aria-label="Добавить сделку">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div>
+    <button class="tab" role="tab" data-view="settings" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Настройки</button>
+  </div>
+</nav>
+
+<dialog id="sheet-trade" aria-label="Сделка"></dialog>
+<dialog id="sheet-detail" aria-label="Просмотр сделки"></dialog>
+<dialog id="sheet-welcome" aria-label="Начало работы"></dialog>
+<dialog id="viewer" aria-label="Скриншот">
+  <img alt="Скриншот сделки">
+  <button class="icon-btn close" aria-label="Закрыть"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="import-file" accept="application/json,.json" class="hidden">
+
+<script>
+/* =========================================================
+   НАСТРОЙКИ БРЕНДА (для лид-магнита)
+   Заполните, и внизу экрана «Обзор» и в настройках появится
+   ссылка на ваш Instagram / Telegram.
+   ========================================================= */
+const CONFIG = {
+  brandName:  '',   // например: 'Gold Academy'
+  brandHandle:'',   // например: '@gold.trader'
+  brandLink:  '',   // например: 'https://instagram.com/gold.trader'
+  brandText:  'Обучение торговле золотом с нуля'
+};
+
+const EMOTIONS = ['Спокойствие','Уверенность','Сомнение','Страх','Жадность','FOMO (боялся упустить)','Скука','Азарт','Хотел отыграться','Усталость'];
+const MISTAKES = ['Вход без сигнала','Без стоп-лосса','Передвинул стоп','Закрыл слишком рано','Пересидел убыток','Превысил риск','Слишком много сделок','Против тренда','Торговал на новостях','Вход на эмоциях'];
+const DEFAULT_SETTINGS = {
+  startDeposit:10000, accountType:'demo', goalAmount:11000, goalText:'',
+  riskPct:1, contractSize:100,
+  rules:['Есть сигнал по моей стратегии','Стоп-лосс поставлен до входа','Риск не больше 1% депозита','Рядом нет важных новостей','Нет желания отыграться'],
+  lastBackup:null, onboarded:false
+};
+
+/* ---------- База данных на устройстве (IndexedDB) ---------- */
+let db;
+function openDB(){
+  return new Promise((res,rej)=>{
+    const r = indexedDB.open('xau-journal',1);
+    r.onupgradeneeded = ()=>{
+      const d = r.result;
+      if(!d.objectStoreNames.contains('trades')) d.createObjectStore('trades',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('images')) d.createObjectStore('images',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('kv')) d.createObjectStore('kv',{keyPath:'k'});
+    };
+    r.onsuccess = ()=>res(r.result);
+    r.onerror = ()=>rej(r.error);
+  });
+}
+const P = r => new Promise((res,rej)=>{ r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });
+const store = (n,m='readonly') => db.transaction(n,m).objectStore(n);
+const dbAll = n => P(store(n).getAll());
+const dbGet = (n,k) => P(store(n).get(k));
+const dbPut = (n,v) => P(store(n,'readwrite').put(v));
+const dbDel = (n,k) => P(store(n,'readwrite').delete(k));
+const dbClear = n => P(store(n,'readwrite').clear());
+
+let settings = {...DEFAULT_SETTINGS};
+let trades = [];
+let tradeFilter = 'all';
+
+async function load(){
+  const s = await dbGet('kv','settings');
+  settings = {...DEFAULT_SETTINGS, ...(s ? s.v : {})};
+  trades = await dbAll('trades');
+}
+const saveSettings = () => dbPut('kv',{k:'settings',v:settings});
+
+/* ---------- Утилиты ---------- */
+const $ = (s,r=document) => r.querySelector(s);
+const $$ = (s,r=document) => [...r.querySelectorAll(s)];
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = v => { const n = parseFloat(String(v ?? '').replace(/\s/g,'').replace(',','.')); return isFinite(n) ? n : null; };
+const usd = new Intl.NumberFormat('ru-RU',{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2});
+const money = v => usd.format(v);
+const signed = v => v>0 ? '+'+usd.format(v) : v<0 ? '−'+usd.format(Math.abs(v)) : usd.format(0);
+const pct = (v,d=1) => v.toLocaleString('ru-RU',{maximumFractionDigits:d}) + '%';
+const plain = v => v==null ? '' : String(v).replace('.',',');
+const cls = v => v>0 ? 'pos' : v<0 ? 'neg' : 'muted';
+function nowLocal(){ const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,16); }
+const fmtDay = s => new Date(s.slice(0,10)+'T12:00').toLocaleDateString('ru-RU',{weekday:'short',day:'numeric',month:'long'});
+const fmtTime = s => s.slice(11,16);
+function session(s){
+  const h = new Date(s).getUTCHours();
+  if(h>=7 && h<12) return 'Лондон';
+  if(h>=12 && h<16) return 'Лондон + Нью-Йорк';
+  if(h>=16 && h<21) return 'Нью-Йорк';
+  return 'Азия';
+}
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2400); }
+
+const ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+
+/* ---------- Картинки ---------- */
+const urlCache = new Map();
+async function imgURL(id){
+  if(urlCache.has(id)) return urlCache.get(id);
+  const r = await dbGet('images',id);
+  if(!r) return '';
+  const u = URL.createObjectURL(r.blob);
+  urlCache.set(id,u);
+  return u;
+}
+function hydrate(root){ $$('img[data-img]',root).forEach(async im=>{ im.src = await imgURL(im.dataset.img); }); }
+async function compress(file){
+  const url = URL.createObjectURL(file);
+  try{
+    const img = await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=url; });
+    const max = 1600;
+    const k = Math.min(1, max/Math.max(img.naturalWidth,img.naturalHeight));
+    const w = Math.round(img.naturalWidth*k), h = Math.round(img.naturalHeight*k);
+    const c = document.createElement('canvas'); c.width=w; c.height=h;
+    c.getContext('2d').drawImage(img,0,0,w,h);
+    return await new Promise(r=>c.toBlob(r,'image/jpeg',0.82));
+  } finally { URL.revokeObjectURL(url); }
+}
+const blobToDataURL = b => new Promise(r=>{ const f=new FileReader(); f.onload=()=>r(f.result); f.readAsDataURL(b); });
+function dataURLToBlob(d){
+  const [head,body] = d.split(',');
+  const mime = (head.match(/data:([^;]+)/)||[])[1] || 'image/jpeg';
+  const bin = atob(body); const arr = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+  return new Blob([arr],{type:mime});
+}
+
+/* ---------- Расчёты ---------- */
+function stats(){
+  const list = [...trades].sort((a,b)=>a.date.localeCompare(b.date) || (a.createdAt-b.createdAt));
+  const start = +settings.startDeposit || 0;
+  let eq = start, peak = start, maxDD = 0, wins=0, losses=0, gw=0, gl=0, plan=0, planKnown=0, week=0;
+  const curve=[start], mist={}, emoLoss={}, sess={};
+  const weekAgo = Date.now() - 7*864e5;
+  for(const t of list){
+    const v = +t.pnl || 0;
+    eq += v; curve.push(eq);
+    if(eq>peak) peak=eq;
+    if(peak>0) maxDD = Math.max(maxDD,(peak-eq)/peak*100);
+    if(v>0){wins++; gw+=v;} else if(v<0){losses++; gl+=v;}
+    if(t.plan===true||t.plan===false){planKnown++; if(t.plan) plan++;}
+    (t.mistakes||[]).forEach(m=>mist[m]=(mist[m]||0)+1);
+    if(v<0) (t.emotions||[]).forEach(e=>emoLoss[e]=(emoLoss[e]||0)+1);
+    const s = session(t.date); sess[s] = sess[s] || {n:0,pnl:0}; sess[s].n++; sess[s].pnl+=v;
+    if(new Date(t.date).getTime() >= weekAgo) week += v;
+  }
+  return {
+    n:list.length, balance:eq, total:eq-start, curve, wins, losses, week, maxDD, mist, emoLoss, sess,
+    winrate:(wins+losses)? wins/(wins+losses)*100 : null,
+    avgWin: wins? gw/wins : null,
+    avgLoss: losses? gl/losses : null,
+    pf: gl ? gw/Math.abs(gl) : null,
+    discipline: planKnown ? plan/planKnown*100 : null
+  };
+}
+function riskOf(entry, sl, lot){
+  if(entry==null || sl==null || !lot) return null;
+  return Math.abs(entry-sl) * lot * (+settings.contractSize || 100);
+}
+
+/* ---------- Обзор ---------- */
+function ingot(prog){
+  const p = Math.round(prog*100), H = 52*prog;
+  return `<svg class="ingot" viewBox="0 0 120 72" role="img" aria-label="Прогресс к цели ${p}%">
+    <defs>
+      <clipPath id="ingot-clip"><polygon points="6,66 114,66 95,14 25,14"/></clipPath>
+      <linearGradient id="ingot-grad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" style="stop-color:var(--gold-bright)"/><stop offset="1" style="stop-color:var(--gold)"/>
+      </linearGradient>
+    </defs>
+    <polygon points="6,66 114,66 95,14 25,14" style="fill:var(--gold-soft)"/>
+    <g clip-path="url(#ingot-clip)"><rect x="0" y="${(66-H).toFixed(1)}" width="120" height="${H.toFixed(1)}" fill="url(#ingot-grad)"/></g>
+    <polygon points="6,66 114,66 95,14 25,14" fill="none" style="stroke:var(--gold)" stroke-width="2" stroke-linejoin="round"/>
+    <text x="60" y="47" text-anchor="middle" class="ingot-pct">${p}%</text>
+  </svg>`;
+}
+function equitySVG(curve,start){
+  const W=600, H=180, pad=8;
+  const min=Math.min(...curve), max=Math.max(...curve), range=(max-min)||1;
+  const x = i => i/(curve.length-1)*W;
+  const y = v => pad + (H-2*pad)*(1-(v-min)/range);
+  const pts = curve.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const up = curve[curve.length-1] >= start;
+  const by = y(start).toFixed(1);
+  return `<svg class="equity" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="График депозита">
+    <path d="M0,${H} L${pts.replace(/ /g,' L')} L${W},${H} Z" style="fill:var(${up?'--profit-soft':'--loss-soft'})"/>
+    <line x1="0" x2="${W}" y1="${by}" y2="${by}" style="stroke:var(--muted)" stroke-width="1" stroke-dasharray="5 5" vector-effect="non-scaling-stroke"/>
+    <polyline points="${pts}" fill="none" style="stroke:var(${up?'--profit':'--loss'})" stroke-width="2.2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+  </svg>`;
+}
+function barList(obj, gold){
+  const arr = Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  if(!arr.length) return '';
+  const max = arr[0][1];
+  return `<ul class="bars">${arr.map(([k,v])=>`<li><div class="top"><span>${esc(k)}</span><span class="num muted">${v}</span></div><div class="track"><div class="fill ${gold?'gold':''}" style="width:${v/max*100}%"></div></div></li>`).join('')}</ul>`;
+}
+function brandHTML(){
+  if(!CONFIG.brandHandle && !CONFIG.brandName) return '';
+  const label = `${esc(CONFIG.brandText)}: <strong>${esc(CONFIG.brandHandle || CONFIG.brandName)}</strong>`;
+  return CONFIG.brandLink
+    ? `<a class="brand" href="${esc(CONFIG.brandLink)}" target="_blank" rel="noopener">${label}</a>`
+    : `<p class="brand">${label}</p>`;
+}
+
+function renderOverview(){
+  const S = stats(), start = +settings.startDeposit || 0, goal = +settings.goalAmount || 0;
+  const prog = goal>start ? Math.max(0,Math.min(1,(S.balance-start)/(goal-start))) : 0;
+  const left = goal - S.balance;
+  const totalPct = start ? S.total/start*100 : 0;
+  const needBackup = S.n>=3 && (!settings.lastBackup || Date.now()-settings.lastBackup > 14*864e5);
+
+  let html = `
+    <div class="topbar"><h1>Дневник трейдера XAUUSD</h1>
+      <span class="pill ${settings.accountType==='real'?'real':''}">${settings.accountType==='real'?'Реальный счёт':'Демо-счёт'}</span></div>
+    ${needBackup?`<div class="banner"><span>Данные хранятся только на этом устройстве. Сохраните копию.</span><button class="btn sm" data-act="export">Сохранить</button></div>`:''}
+    <div class="hero">
+      <div class="label">Депозит</div>
+      <div class="balance num">${money(S.balance)}</div>
+      <div class="delta num ${cls(S.total)}">${signed(S.total)} (${S.total>0?'+':S.total<0?'−':''}${pct(Math.abs(totalPct),2)}) с начала</div>
+    </div>
+    <div class="goal">
+      ${ingot(prog)}
+      <div>
+        <h3>Цель: ${money(goal)}</h3>
+        ${settings.goalText?`<p>${esc(settings.goalText)}</p>`:''}
+        ${goal<=start ? `<p>Укажите цель больше стартового депозита в настройках</p>`
+          : left<=0 ? `<p class="left goal-done">Цель достигнута. Поставьте следующую</p>`
+          : `<p class="left num">Осталось ${money(left)}</p>`}
+      </div>
+    </div>`;
+
+  if(!S.n){
+    html += `<div class="empty" style="margin-top:20px"><h3>Здесь появится ваша статистика</h3>
+      <p>Добавьте первую сделку: скриншот, результат и пару слов о том, почему вошли.</p>
+      <button class="btn primary" data-act="add">Добавить сделку</button></div>`;
+  } else {
+    const winrate = S.winrate==null ? '—' : pct(S.winrate,0);
+    const pf = S.pf==null ? (S.wins?'∞':'—') : S.pf.toLocaleString('ru-RU',{maximumFractionDigits:2});
+    html += `
+      <h2 class="sec">Кривая депозита</h2>
+      <div class="chart"><div class="chart-head num"><span>Макс. ${money(Math.max(...S.curve))}</span><span>Мин. ${money(Math.min(...S.curve))}</span></div>
+        ${equitySVG(S.curve,start)}</div>
+      <h2 class="sec">Статистика</h2>
+      <div class="stats num">
+        <div class="stat"><b>${S.n}</b><small>Сделок</small></div>
+        <div class="stat"><b>${winrate}</b><small>Прибыльных (${S.wins} из ${S.wins+S.losses})</small></div>
+        <div class="stat"><b class="pos">${S.avgWin==null?'—':money(S.avgWin)}</b><small>Средняя прибыль</small></div>
+        <div class="stat"><b class="neg">${S.avgLoss==null?'—':money(Math.abs(S.avgLoss))}</b><small>Средний убыток</small></div>
+        <div class="stat"><b>${pf}</b><small>Профит-фактор</small></div>
+        <div class="stat"><b class="${S.maxDD>10?'neg':''}">${pct(S.maxDD)}</b><small>Макс. просадка</small></div>
+        <div class="stat"><b class="${S.discipline!=null&&S.discipline<70?'neg':''}">${S.discipline==null?'—':pct(S.discipline,0)}</b><small>Сделок по плану</small></div>
+        <div class="stat"><b class="${cls(S.week)}">${signed(S.week)}</b><small>За 7 дней</small></div>
+      </div>
+      <h2 class="sec">Частые ошибки</h2>
+      ${barList(S.mist) || '<p class="note-empty">Ошибок не отмечено. Честно отмечайте их в сделках, чтобы видеть, что мешает расти.</p>'}
+      <h2 class="sec">Эмоции в убыточных сделках</h2>
+      ${barList(S.emoLoss,true) || '<p class="note-empty">Пока нет данных.</p>'}
+      <h2 class="sec">Результат по сессиям</h2>
+      <ul class="bars">${Object.entries(S.sess).sort((a,b)=>b[1].pnl-a[1].pnl).map(([k,v])=>`<li><div class="top"><span>${k} <span class="muted">(${v.n})</span></span><span class="num ${cls(v.pnl)}">${signed(v.pnl)}</span></div></li>`).join('')}</ul>
+      <p class="note-empty" style="margin-top:6px">Сессия определяется по времени сделки, примерно.</p>`;
+  }
+  html += brandHTML();
+  $('#view-overview').innerHTML = html;
+}
+
+/* ---------- Список сделок ---------- */
+function renderTrades(){
+  const F = {all:'Все', win:'Прибыльные', loss:'Убыточные', offplan:'Не по плану', buy:'Buy', sell:'Sell'};
+  let list = [...trades].sort((a,b)=>b.date.localeCompare(a.date) || (b.createdAt-a.createdAt));
+  if(tradeFilter==='win') list = list.filter(t=>t.pnl>0);
+  if(tradeFilter==='loss') list = list.filter(t=>t.pnl<0);
+  if(tradeFilter==='offplan') list = list.filter(t=>t.plan===false);
+  if(tradeFilter==='buy'||tradeFilter==='sell') list = list.filter(t=>t.dir===tradeFilter);
+
+  let html = `<div class="topbar"><h1>Сделки</h1><span class="muted" style="font-size:14px">${trades.length}</span></div>
+    <div class="filters">${Object.entries(F).map(([k,v])=>`<button class="chip" data-filter="${k}" aria-pressed="${tradeFilter===k}">${v}</button>`).join('')}</div>`;
+
+  if(!trades.length){
+    html += `<div class="empty"><h3>Сделок пока нет</h3><p>Нажмите «+» внизу, чтобы записать первую.</p><button class="btn primary" data-act="add">Добавить сделку</button></div>`;
+  } else if(!list.length){
+    html += `<p class="note-empty">Нет сделок с этим фильтром.</p>`;
+  } else {
+    const groups = {};
+    list.forEach(t=>{ (groups[t.date.slice(0,10)] ||= []).push(t); });
+    for(const [day,items] of Object.entries(groups)){
+      const sum = items.reduce((s,t)=>s+(+t.pnl||0),0);
+      html += `<div class="day"><span>${fmtDay(day)}</span><span class="num ${cls(sum)}">${signed(sum)}</span></div>`;
+      html += items.map(t=>`
+        <button class="trade" data-open="${t.id}">
+          <span class="dir ${t.dir}">${t.dir==='buy'?'BUY':'SELL'}</span>
+          <span class="mid"><div>${esc(t.setup || 'XAUUSD')}</div>
+            <small class="num">${fmtTime(t.date)}${t.lot?`, ${plain(t.lot)} лот`:''}${t.plan===false?' <span class="flag">не по плану</span>':''}</small></span>
+          <span class="right"><span class="pnl num ${cls(t.pnl)}">${signed(+t.pnl||0)}</span>
+            ${t.imageIds&&t.imageIds.length?`<img class="thumb" data-img="${t.imageIds[0]}" alt="">`:''}</span>
+        </button>`).join('');
+    }
+  }
+  const el = $('#view-trades');
+  el.innerHTML = html;
+  hydrate(el);
+}
+
+/* ---------- Настройки ---------- */
+async function renderSettings(){
+  const s = settings;
+  const el = $('#view-settings');
+  el.innerHTML = `
+    <div class="topbar"><h1>Настройки</h1></div>
+    <div class="settings-group">
+      <h3>Счёт и цель</h3>
+      <div class="field"><span class="field-label">Тип счёта</span>
+        <div class="seg" id="s-type"><button type="button" data-v="demo" aria-pressed="${s.accountType!=='real'}">Демо</button><button type="button" data-v="real" aria-pressed="${s.accountType==='real'}">Реальный</button></div></div>
+      <div class="row2">
+        <label class="field"><span>Стартовый депозит, $</span><input id="s-start" inputmode="decimal" value="${plain(s.startDeposit)}"></label>
+        <label class="field"><span>Цель по депозиту, $</span><input id="s-goal" inputmode="decimal" value="${plain(s.goalAmount)}"></label>
+      </div>
+      <label class="field"><span>Цель развития своими словами</span><input id="s-goaltext" maxlength="120" placeholder="Например: 20 сделок подряд по плану" value="${esc(s.goalText)}"></label>
+    </div>
+    <div class="settings-group">
+      <h3>Риск и правила</h3>
+      <div class="row2">
+        <label class="field"><span>Макс. риск на сделку, %</span><input id="s-risk" inputmode="decimal" value="${plain(s.riskPct)}"></label>
+        <label class="field"><span>Унций в 1 лоте</span><input id="s-contract" inputmode="decimal" value="${plain(s.contractSize)}"></label>
+      </div>
+      <p class="hint">У большинства брокеров 1 лот XAUUSD = 100 унций. Проверьте в спецификации своего брокера.</p>
+      <label class="field"><span>Мои правила перед входом (каждое с новой строки)</span><textarea id="s-rules" rows="5">${esc(s.rules.join('\n'))}</textarea></label>
+    </div>
+    <button class="btn primary wide" id="s-save" style="margin-bottom:22px">Сохранить настройки</button>
+
+    <div class="settings-group">
+      <h3>Резервная копия</h3>
+      <p class="hint" style="margin:0 0 12px">Журнал хранится только на этом устройстве. Сохраняйте копию раз в неделю: из неё можно восстановить всё на новом телефоне или компьютере.</p>
+      <div class="stack">
+        <button class="btn wide" data-act="export">Сохранить копию</button>
+        <button class="btn wide" data-act="import">Загрузить копию</button>
+      </div>
+      <p class="hint" style="margin:0 0 12px">Последняя копия: ${s.lastBackup ? new Date(s.lastBackup).toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'}) : 'ещё не сохранялась'}<span id="s-usage"></span></p>
+    </div>
+    <div class="settings-group">
+      <h3>Как установить на телефон</h3>
+      <p class="hint" style="margin:0 0 14px">iPhone: откройте в Safari, нажмите «Поделиться», затем «На экран Домой».<br>Android: в Chrome откройте меню (три точки) и выберите «Установить приложение».</p>
+    </div>
+    <button class="btn danger wide" id="s-reset">Удалить все данные</button>
+    ${brandHTML()}`;
+
+  if(navigator.storage && navigator.storage.estimate){
+    try{ const e = await navigator.storage.estimate(); if(e.usage!=null) $('#s-usage').textContent = `. Занято: ${(e.usage/1048576).toLocaleString('ru-RU',{maximumFractionDigits:1})} МБ`; }catch(_){}
+  }
+}
+async function saveSettingsForm(){
+  const start = num($('#s-start').value), goal = num($('#s-goal').value);
+  if(start==null || start<=0){ toast('Укажите стартовый депозит больше нуля'); return; }
+  settings.startDeposit = start;
+  settings.goalAmount = goal ?? settings.goalAmount;
+  settings.goalText = $('#s-goaltext').value.trim();
+  settings.riskPct = num($('#s-risk').value) ?? 1;
+  settings.contractSize = num($('#s-contract').value) || 100;
+  settings.rules = $('#s-rules').value.split('\n').map(x=>x.trim()).filter(Boolean);
+  settings.accountType = $('#s-type [aria-pressed="true"]').dataset.v;
+  await saveSettings();
+  renderAll();
+  toast('Настройки сохранены');
+}
+
+/* ---------- Форма сделки ---------- */
+let form = null; // {trade, imgs:[{id,url,blob?,existing}], removed:[]}
+
+async function openTradeForm(t){
+  const isNew = !t;
+  t = t ? structuredClone(t) : {id:uid(), date:nowLocal(), dir:'buy', lot:'', entry:'', exit:'', sl:'', tp:'', pnl:'', plan:null, rules:[], emotions:[], mistakes:[], setup:'', notes:'', imageIds:[], createdAt:Date.now()};
+  form = {trade:t, isNew, imgs:[], removed:[]};
+  for(const id of t.imageIds||[]) form.imgs.push({id, url:await imgURL(id), existing:true});
+  const sign = (+t.pnl||0) < 0 ? 'loss' : 'win';
+  const absP = t.pnl===''||t.pnl==null ? '' : plain(Math.abs(+t.pnl));
+  const rulesSet = new Set(t.rules||[]);
+  const dlg = $('#sheet-trade');
+  dlg.innerHTML = `
+    <div class="sheet-head"><button class="icon-btn" data-close aria-label="Закрыть">${ICON_X}</button>
+      <h2>${isNew?'Новая сделка':'Изменить сделку'}</h2><button class="btn primary sm" id="f-save">Сохранить</button></div>
+    <div class="sheet-body">
+      <label class="field"><span>Дата и время входа</span><input type="datetime-local" id="f-date" value="${t.date}"></label>
+      <div class="field"><span class="field-label">Направление</span>
+        <div class="seg" id="f-dir"><button type="button" class="buy" data-v="buy" aria-pressed="${t.dir==='buy'}">Buy</button><button type="button" class="sell" data-v="sell" aria-pressed="${t.dir==='sell'}">Sell</button></div></div>
+      <div class="row3">
+        <label class="field"><span>Лот</span><input id="f-lot" inputmode="decimal" placeholder="0,01" value="${plain(t.lot)}"></label>
+        <label class="field"><span>Вход</span><input id="f-entry" inputmode="decimal" placeholder="2650,00" value="${plain(t.entry)}"></label>
+        <label class="field"><span>Выход</span><input id="f-exit" inputmode="decimal" value="${plain(t.exit)}"></label>
+      </div>
+      <div class="row2">
+        <label class="field"><span>Стоп-лосс</span><input id="f-sl" inputmode="decimal" value="${plain(t.sl)}"></label>
+        <label class="field"><span>Тейк-профит</span><input id="f-tp" inputmode="decimal" value="${plain(t.tp)}"></label>
+      </div>
+      <p class="hint" id="f-risk"></p>
+
+      <div class="field"><span class="field-label">Результат сделки</span>
+        <div class="seg" id="f-sign"><button type="button" class="win" data-v="win" aria-pressed="${sign==='win'}">Прибыль</button><button type="button" class="loss" data-v="loss" aria-pressed="${sign==='loss'}">Убыток</button></div>
+        <div class="pnl-row"><input id="f-pnl" inputmode="decimal" placeholder="Сумма в $" value="${absP}" aria-label="Сумма результата в долларах"><button type="button" class="btn sm" id="f-calc">Посчитать по ценам</button></div>
+      </div>
+      <p class="hint">Лучше вписать точную сумму из терминала: в ней уже учтены комиссия и своп.</p>
+
+      <div class="field"><span class="field-label">Скриншоты графика</span>
+        <div class="shots" id="f-shots"></div></div>
+
+      ${settings.rules.length?`<div class="field"><span class="field-label">Чек-лист перед входом</span><div class="box checks">
+        ${settings.rules.map(r=>`<label><input type="checkbox" value="${esc(r)}" ${rulesSet.has(r)?'checked':''}><span>${esc(r)}</span></label>`).join('')}</div></div>`:''}
+
+      <div class="field"><span class="field-label">Сделка по моему плану?</span>
+        <div class="seg" id="f-plan"><button type="button" class="win" data-v="yes" aria-pressed="${t.plan===true}">Да</button><button type="button" class="loss" data-v="no" aria-pressed="${t.plan===false}">Нет</button></div></div>
+
+      <label class="field"><span>Почему вошёл (сетап, сигнал)</span><input id="f-setup" maxlength="80" placeholder="Например: отбой от уровня 2650" value="${esc(t.setup)}"></label>
+
+      <div class="field"><span class="field-label">Эмоции</span><div class="chips" id="f-emo">
+        ${EMOTIONS.map(e=>`<button type="button" class="chip" aria-pressed="${(t.emotions||[]).includes(e)}">${esc(e)}</button>`).join('')}</div></div>
+
+      <div class="field"><span class="field-label">Ошибки</span><div class="chips" id="f-mist">
+        ${MISTAKES.map(e=>`<button type="button" class="chip" aria-pressed="${(t.mistakes||[]).includes(e)}">${esc(e)}</button>`).join('')}</div></div>
+
+      <label class="field"><span>Заметки и вывод: что сделаю иначе</span><textarea id="f-notes" rows="4">${esc(t.notes)}</textarea></label>
+      ${!isNew?`<button class="btn danger wide" id="f-delete">Удалить сделку</button>`:''}
+    </div>`;
+  renderShots();
+  updateRisk();
+  dlg.showModal();
+  dlg.querySelector('.sheet-body').scrollTop = 0;
+}
+function renderShots(){
+  const box = $('#f-shots');
+  box.innerHTML = form.imgs.map((im,i)=>`<div class="shot"><img src="${im.url}" alt="Скриншот ${i+1}"><button type="button" data-rm="${i}" aria-label="Убрать скриншот">×</button></div>`).join('')
+    + `<label class="shot-add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M12 9v6M9 12h6"/></svg>Добавить<input type="file" accept="image/*" multiple class="hidden" id="f-file"></label>`;
+}
+function segVal(id){ const b = $(`#${id} [aria-pressed="true"]`); return b ? b.dataset.v : null; }
+function updateRisk(){
+  const el = $('#f-risk'); if(!el) return;
+  const r = riskOf(num($('#f-entry').value), num($('#f-sl').value), num($('#f-lot').value));
+  if(r==null){ el.textContent = 'Укажите лот, вход и стоп-лосс, чтобы увидеть риск сделки.'; el.className='hint'; return; }
+  const bal = stats().balance - (form.isNew ? 0 : (+form.trade.pnl||0));
+  const p = bal>0 ? r/bal*100 : 0;
+  const over = p > (+settings.riskPct||1);
+  el.textContent = `Риск по стопу: ${money(r)} (${pct(p,2)} депозита)${over?`. Это больше вашего лимита ${pct(+settings.riskPct||1)}`:''}`;
+  el.className = over ? 'hint warn' : 'hint';
+}
+function calcPnl(){
+  const lot=num($('#f-lot').value), en=num($('#f-entry').value), ex=num($('#f-exit').value);
+  if(lot==null||en==null||ex==null){ toast('Нужны лот, цена входа и цена выхода'); return; }
+  const v = (ex-en) * (segVal('f-dir')==='sell'?-1:1) * lot * (+settings.contractSize||100);
+  $('#f-pnl').value = plain(Math.round(Math.abs(v)*100)/100);
+  setSeg('f-sign', v<0?'loss':'win');
+}
+function setSeg(id,v){ $$(`#${id} button`).forEach(b=>b.setAttribute('aria-pressed', b.dataset.v===v)); }
+
+async function saveTrade(){
+  const t = form.trade;
+  t.date = $('#f-date').value || nowLocal();
+  t.dir = segVal('f-dir') || 'buy';
+  t.lot = num($('#f-lot').value); t.entry = num($('#f-entry').value); t.exit = num($('#f-exit').value);
+  t.sl = num($('#f-sl').value); t.tp = num($('#f-tp').value);
+  let amount = num($('#f-pnl').value);
+  if(amount==null && t.lot!=null && t.entry!=null && t.exit!=null){ calcPnl(); amount = num($('#f-pnl').value); }
+  amount = Math.abs(amount || 0);
+  t.pnl = segVal('f-sign')==='loss' ? -amount : amount;
+  const plan = segVal('f-plan'); t.plan = plan==='yes' ? true : plan==='no' ? false : null;
+  t.rules = $$('#sheet-trade .checks input:checked').map(i=>i.value);
+  t.emotions = $$('#f-emo [aria-pressed="true"]').map(b=>b.textContent);
+  t.mistakes = $$('#f-mist [aria-pressed="true"]').map(b=>b.textContent);
+  t.setup = $('#f-setup').value.trim();
+  t.notes = $('#f-notes').value.trim();
+  for(const im of form.imgs) if(!im.existing){ await dbPut('images',{id:im.id, tradeId:t.id, blob:im.blob}); urlCache.set(im.id, im.url); }
+  for(const id of form.removed){ await dbDel('images',id); const u=urlCache.get(id); if(u){URL.revokeObjectURL(u); urlCache.delete(id);} }
+  t.imageIds = form.imgs.map(i=>i.id);
+  t.updatedAt = Date.now();
+  await dbPut('trades',t);
+  trades = await dbAll('trades');
+  const wasNew = form.isNew;
+  form = null;
+  $('#sheet-trade').close();
+  renderAll();
+  if($('#sheet-detail').open) openDetail(t.id);
+  toast(wasNew ? 'Сделка добавлена' : 'Сделка сохранена');
+}
+async function deleteTrade(id){
+  if(!confirm('Удалить сделку вместе со скриншотами? Это действие нельзя отменить.')) return;
+  const t = trades.find(x=>x.id===id);
+  for(const im of (t&&t.imageIds)||[]){ await dbDel('images',im); const u=urlCache.get(im); if(u){URL.revokeObjectURL(u); urlCache.delete(im);} }
+  await dbDel('trades',id);
+  trades = await dbAll('trades');
+  form = null;
+  $('#sheet-trade').open && $('#sheet-trade').close();
+  $('#sheet-detail').open && $('#sheet-detail').close();
+  renderAll();
+  toast('Сделка удалена');
+}
+
+/* ---------- Просмотр сделки ---------- */
+function openDetail(id){
+  const t = trades.find(x=>x.id===id); if(!t) return;
+  const risk = riskOf(t.entry,t.sl,t.lot);
+  const R = risk ? (+t.pnl||0)/risk : null;
+  const cell = (k,v) => `<div><small>${k}</small><b class="num">${v}</b></div>`;
+  const dash = v => v==null||v==='' ? '—' : plain(v);
+  const dlg = $('#sheet-detail');
+  dlg.innerHTML = `
+    <div class="sheet-head"><button class="icon-btn" data-close aria-label="Закрыть">${ICON_X}</button><h2>Сделка</h2><span></span></div>
+    <div class="sheet-body">
+      <div class="muted" style="font-size:14px">${fmtDay(t.date)}, ${fmtTime(t.date)}. Сессия: ${session(t.date)}</div>
+      <div class="d-pnl num ${cls(t.pnl)}">${signed(+t.pnl||0)}</div>
+      <div><span class="dir ${t.dir}" style="display:inline-block">${t.dir==='buy'?'BUY':'SELL'}</span>
+        ${t.plan===true?'<span class="muted" style="font-size:14px;margin-left:8px">по плану</span>':t.plan===false?'<span class="flag" style="margin-left:8px">не по плану</span>':''}</div>
+      <div class="kv">
+        ${cell('Лот',dash(t.lot))}${cell('Вход → выход',`${dash(t.entry)} → ${dash(t.exit)}`)}
+        ${cell('Стоп-лосс',dash(t.sl))}${cell('Тейк-профит',dash(t.tp))}
+        ${cell('Риск',risk?money(risk):'—')}${cell('Результат в R',R==null?'—':(R>0?'+':'')+R.toLocaleString('ru-RU',{maximumFractionDigits:2})+'R')}
+      </div>
+      ${t.setup?`<div class="d-sec">Почему вошёл</div><p class="d-text">${esc(t.setup)}</p>`:''}
+      ${settings.rules.length||t.rules&&t.rules.length?`<div class="d-sec">Чек-лист: выполнено ${(t.rules||[]).length} из ${Math.max(settings.rules.length,(t.rules||[]).length)}</div>`:''}
+      ${t.emotions&&t.emotions.length?`<div class="d-sec">Эмоции</div><div class="chips">${t.emotions.map(e=>`<span class="chip">${esc(e)}</span>`).join('')}</div>`:''}
+      ${t.mistakes&&t.mistakes.length?`<div class="d-sec">Ошибки</div><div class="chips">${t.mistakes.map(e=>`<span class="chip" style="border-color:var(--loss)">${esc(e)}</span>`).join('')}</div>`:''}
+      ${t.notes?`<div class="d-sec">Заметки и вывод</div><p class="d-text">${esc(t.notes)}</p>`:''}
+      ${t.imageIds&&t.imageIds.length?`<div class="d-sec">Скриншоты</div>${t.imageIds.map(id=>`<img class="d-img" data-img="${id}" data-zoom alt="Скриншот сделки">`).join('')}`:''}
+      <div class="actions"><button class="btn danger" data-del="${t.id}">Удалить</button><button class="btn primary" data-edit="${t.id}">Изменить</button></div>
+    </div>`;
+  hydrate(dlg);
+  if(!dlg.open) dlg.showModal();
+  dlg.querySelector('.sheet-body').scrollTop = 0;
+}
+
+/* ---------- Первый запуск ---------- */
+function openWelcome(){
+  const dlg = $('#sheet-welcome');
+  dlg.innerHTML = `
+    <div class="sheet-head"><span></span><h2>Начнём</h2><span></span></div>
+    <div class="sheet-body">
+      <p class="welcome-text">Дневник помогает видеть свои ошибки и расти как трейдер. Записывайте каждую сделку: скриншот, результат, эмоции и вывод. Все данные хранятся только на вашем устройстве.</p>
+      <div class="field"><span class="field-label">На каком счёте торгуете?</span>
+        <div class="seg" id="w-type"><button type="button" data-v="demo" aria-pressed="true">Демо</button><button type="button" data-v="real" aria-pressed="false">Реальный</button></div></div>
+      <div class="row2">
+        <label class="field"><span>Стартовый депозит, $</span><input id="w-start" inputmode="decimal" value="10000"></label>
+        <label class="field"><span>Цель по депозиту, $</span><input id="w-goal" inputmode="decimal" value="11000"></label>
+      </div>
+      <label class="field"><span>Цель развития (необязательно)</span><input id="w-goaltext" maxlength="120" placeholder="Например: 20 сделок подряд по плану"></label>
+      <button class="btn primary wide" id="w-go">Начать вести дневник</button>
+      <p class="hint" style="margin-top:14px">Всё это можно поменять позже в настройках.</p>
+    </div>`;
+  dlg.showModal();
+}
+async function finishWelcome(){
+  const start = num($('#w-start').value);
+  if(!start || start<=0){ toast('Укажите стартовый депозит больше нуля'); return; }
+  settings.startDeposit = start;
+  settings.goalAmount = num($('#w-goal').value) || Math.round(start*1.1);
+  settings.goalText = $('#w-goaltext').value.trim();
+  settings.accountType = segVal('w-type') || 'demo';
+  settings.onboarded = true;
+  await saveSettings();
+  $('#sheet-welcome').close();
+  renderAll();
+}
+
+/* ---------- Резервная копия ---------- */
+async function exportData(){
+  try{
+    const imgs = await dbAll('images');
+    const images = [];
+    for(const i of imgs) images.push({id:i.id, tradeId:i.tradeId, data:await blobToDataURL(i.blob)});
+    const data = {app:'xau-journal', version:1, exportedAt:new Date().toISOString(), settings, trades, images};
+    const name = `dnevnik-xau-${nowLocal().slice(0,10)}.json`;
+    const blob = new Blob([JSON.stringify(data)],{type:'application/json'});
+    const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    let file = null; try{ file = new File([blob],name,{type:'application/json'}); }catch(_){}
+    if(mobile && file && navigator.canShare && navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file], title:name}); }
+      catch(e){ if(e.name==='AbortError') return; download(blob,name); }
+    } else download(blob,name);
+    settings.lastBackup = Date.now();
+    await saveSettings();
+    renderAll();
+    toast('Копия сохранена');
+  }catch(e){ toast('Не получилось сохранить копию: ' + e.message); }
+}
+function download(blob,name){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+}
+async function importData(file){
+  let data;
+  try{ data = JSON.parse(await file.text()); }catch(_){ toast('Файл не читается. Выберите копию дневника (.json)'); return; }
+  if(data.app!=='xau-journal' || !Array.isArray(data.trades)){ toast('Это не копия дневника'); return; }
+  const when = data.exportedAt ? new Date(data.exportedAt).toLocaleDateString('ru-RU') : 'неизвестной даты';
+  if(!confirm(`Загрузить копию от ${when}? В ней сделок: ${data.trades.length}.\nТекущие данные на этом устройстве будут заменены.`)) return;
+  await dbClear('trades'); await dbClear('images');
+  for(const t of data.trades) await dbPut('trades',t);
+  for(const i of data.images||[]) await dbPut('images',{id:i.id, tradeId:i.tradeId, blob:dataURLToBlob(i.data)});
+  settings = {...DEFAULT_SETTINGS, ...(data.settings||{}), onboarded:true};
+  await saveSettings();
+  urlCache.forEach(u=>URL.revokeObjectURL(u)); urlCache.clear();
+  await load();
+  renderAll();
+  toast('Копия загружена');
+}
+async function resetAll(){
+  if(!confirm('Удалить все сделки, скриншоты и настройки на этом устройстве?')) return;
+  if(!confirm('Точно удалить? Восстановить можно будет только из резервной копии.')) return;
+  await dbClear('trades'); await dbClear('images'); await dbClear('kv');
+  urlCache.forEach(u=>URL.revokeObjectURL(u)); urlCache.clear();
+  await load();
+  renderAll();
+  showView('overview');
+  openWelcome();
+}
+
+/* ---------- Навигация и события ---------- */
+let currentView = 'overview';
+function showView(v){
+  currentView = v;
+  $$('.view').forEach(s=>s.classList.toggle('active', s.id==='view-'+v));
+  $$('.tab').forEach(b=>b.setAttribute('aria-selected', b.dataset.view===v));
+  window.scrollTo(0,0);
+}
+function renderAll(){ renderOverview(); renderTrades(); renderSettings(); }
+
+document.addEventListener('click', async e=>{
+  const b = e.target.closest('button, [data-zoom]');
+  if(!b) return;
+  if(b.dataset.view){ showView(b.dataset.view); return; }
+  if(b.id==='btn-add' || b.dataset.act==='add'){ openTradeForm(); return; }
+  if(b.dataset.act==='export'){ exportData(); return; }
+  if(b.dataset.act==='import'){ $('#import-file').click(); return; }
+  if(b.dataset.filter){ tradeFilter = b.dataset.filter; renderTrades(); return; }
+  if(b.dataset.open){ openDetail(b.dataset.open); return; }
+  if(b.dataset.edit){ const t = trades.find(x=>x.id===b.dataset.edit); openTradeForm(t); return; }
+  if(b.dataset.del){ deleteTrade(b.dataset.del); return; }
+  if(b.hasAttribute('data-close')){ const d = b.closest('dialog'); if(d.id==='sheet-trade') form=null; d.close(); return; }
+  if(b.hasAttribute('data-zoom')){ const v=$('#viewer'); $('img',v).src = b.src; v.showModal(); return; }
+  if(b.closest('#viewer')){ $('#viewer').close(); return; }
+  if(b.parentElement && b.parentElement.classList.contains('seg')){ $$('button',b.parentElement).forEach(x=>x.setAttribute('aria-pressed', x===b)); if(b.parentElement.id==='f-dir') updateRisk(); return; }
+  if(b.classList.contains('chip') && b.closest('#f-emo, #f-mist')){ b.setAttribute('aria-pressed', b.getAttribute('aria-pressed')!=='true'); return; }
+  if(b.dataset.rm!=null){ const im = form.imgs.splice(+b.dataset.rm,1)[0]; if(im.existing) form.removed.push(im.id); else URL.revokeObjectURL(im.url); renderShots(); return; }
+  if(b.id==='f-calc'){ calcPnl(); return; }
+  if(b.id==='f-save'){ saveTrade(); return; }
+  if(b.id==='f-delete'){ deleteTrade(form.trade.id); return; }
+  if(b.id==='s-save'){ saveSettingsForm(); return; }
+  if(b.id==='s-reset'){ resetAll(); return; }
+  if(b.id==='w-go'){ finishWelcome(); return; }
+});
+$('#viewer').addEventListener('click', e=>{ if(e.target.tagName==='IMG' || e.target===e.currentTarget) $('#viewer').close(); });
+document.addEventListener('input', e=>{ if(['f-entry','f-sl','f-lot'].includes(e.target.id)) updateRisk(); });
+document.addEventListener('change', async e=>{
+  if(e.target.id==='f-file'){
+    const files = [...e.target.files];
+    for(const f of files){
+      try{ const blob = await compress(f); form.imgs.push({id:uid(), blob, url:URL.createObjectURL(blob), existing:false}); }
+      catch(_){ toast('Не удалось открыть изображение'); }
+    }
+    renderShots();
+  }
+  if(e.target.id==='import-file' && e.target.files[0]){ await importData(e.target.files[0]); e.target.value=''; }
+});
+// Не закрывать приветствие кнопкой «Назад»/Esc
+$('#sheet-welcome').addEventListener('cancel', e=>e.preventDefault());
+$('#sheet-trade').addEventListener('close', ()=>{ if(form){ form.imgs.filter(i=>!i.existing).forEach(i=>URL.revokeObjectURL(i.url)); form=null; } });
+
+/* ---------- Запуск ---------- */
+(async function init(){
+  try{
+    db = await openDB();
+    await load();
+  }catch(e){
+    document.querySelector('main').innerHTML = `<div class="empty"><h3>Хранилище недоступно</h3><p>Браузер не даёт сохранять данные. Выйдите из режима «Инкогнито» или откройте дневник в Safari или Chrome.</p></div>`;
+    return;
+  }
+  renderAll();
+  if(!settings.onboarded) openWelcome();
+  try{ navigator.storage && navigator.storage.persist && navigator.storage.persist(); }catch(_){}
+  if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  }
+})();
+</script>
+</body>
+</html>
